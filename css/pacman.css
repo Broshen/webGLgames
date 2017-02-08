@@ -1,0 +1,22 @@
+body{
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	background: pink;
+}
+
+canvas{
+	width: 100% !important;
+	height: 100% !important;
+}
+
+
+#map-2d{
+	position: fixed;
+	top: 0;
+	right: 0;
+	border: 5px solid black;
+	background: black;
+	width: auto !important;
+	height: auto !important;
+}
