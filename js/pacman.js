@@ -2,7 +2,7 @@ var key_map = {};
 var camera, camera2, scene, renderer;
 var geometry, material, mesh;
 var controls;
-var speed = 400.0;
+var accel = 400.0;
 var wall = [];
 var raycaster;
 var element = document.body;
@@ -94,14 +94,14 @@ THREE.PointerLockControls = function(camera) {
     var PI_2 = Math.PI / 2;
 
     this.rays = [
-        new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(1, 0, 1),
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(1, 0, -1),
+//        new THREE.Vector3(0, 0, 1),
+        //new THREE.Vector3(1, 0, 1),
+//        new THREE.Vector3(1, 0, 0),
+        //new THREE.Vector3(1, 0, -1),
         new THREE.Vector3(0, 0, -1),
-        new THREE.Vector3(-1, 0, -1),
-        new THREE.Vector3(-1, 0, 0),
-        new THREE.Vector3(-1, 0, 1)
+        //new THREE.Vector3(-1, 0, -1),
+        //new THREE.Vector3(-1, 0, 0),
+        //new THREE.Vector3(-1, 0, 1)
     ];
 
     var onMouseMove = function(event) {
@@ -200,7 +200,7 @@ init();
 animate();
 
 function init() {
-    camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     setup_2d();
     camera2.position.y = 200;
@@ -234,7 +234,7 @@ function init() {
     for (var i = 0; i < map.length; i++) {
         for (var j = 0; j < map[i].length; j++) {
             if (map[i][j] == '0') {
-                wall_material = new THREE.MeshBasicMaterial({ color: "#ffffff" });
+                wall_material = new THREE.MeshBasicMaterial({ color: "#ffffff", side: THREE.DoubleSide });
                 wallUnit = new THREE.Mesh(wall_geometry, wall_material);
 
                 wall.push(wallUnit);
@@ -270,7 +270,7 @@ var intersects = [],
     prevIntersects = [],
     arrow = [];
 var INTERSECTED = [];
-var len = 7;
+var len = 5;
 
 
 function testRay(rayIndex){
@@ -298,37 +298,50 @@ function animate() {
             var raycaster = new THREE.Raycaster(controls.getObject().position, dd, 0, len);
 
 
-            intersects = raycaster.intersectObjects(wall);
+            intersects[i] = raycaster.intersectObjects(wall);
 
-            // if there is one (or more) intersections
-            if (intersects.length > 0) {
-                // if the closest object intersected is not the currently stored intersection object
-                if (intersects[0].object != INTERSECTED[i]) {
-                    // restore previous intersection object (if it exists) to its original color
-                    if (INTERSECTED[i])
-                        INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
-                    // store reference to closest object as current intersection object
-                    INTERSECTED[i] = intersects[0].object;
-                    // store color of closest object (for later restoration)
-                    INTERSECTED[i].currentHex = INTERSECTED[i].material.color.getHex();
-                    // set a new color for closest object
-                    INTERSECTED[i].material.color.setHex(0xffff00);
-                }
-            } else{ // there are no intersections
+            // // if there is one (or more) intersections
+            // if (intersects[i].length > 0) {
+            //     // if the closest object intersected is not the currently stored intersection object
+            //     if (intersects[i][0].object != INTERSECTED[i]) {
+            //         // restore previous intersection object (if it exists) to its original color
+            //         if (INTERSECTED[i])
+            //             INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
+            //         // store reference to closest object as current intersection object
+            //         INTERSECTED[i] = intersects[i][0].object;
+            //         // store color of closest object (for later restoration)
+            //         INTERSECTED[i].currentHex = INTERSECTED[i].material.color.getHex();
+            //         // set a new color for closest object
+            //         INTERSECTED[i].material.color.setHex(0xffff00);
+            //     }
+            // } else{ // there are no intersections
             
-                // restore previous intersection object (if it exists) to its original color
-                if (INTERSECTED[i])
-                    INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
-                // remove previous intersection object reference
-                //     by setting current intersection object to "nothing"
-                INTERSECTED[i] = null;
+            //     // restore previous intersection object (if it exists) to its original color
+            //     if (INTERSECTED[i])
+            //         INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
+            //     // remove previous intersection object reference
+            //     //     by setting current intersection object to "nothing"
+            //     INTERSECTED[i] = null;
+            // }
+
+            if (intersects[i].length > 0 && controls.rays[i].x == -1) canMoveLeft = false;
+            if (intersects[i].length > 0 && controls.rays[i].x == 1) canMoveRight = false;
+            if (intersects[i].length > 0 && controls.rays[i].z == -1) canMoveForward = false;
+            if (intersects[i].length > 0 && controls.rays[i].z == 1) canMoveBack = false;
+
+
+            if(intersects[i].length > 0 ){
+
+                var p = intersects[i][0].point;
+                var d = Math.round(intersects[i][0].distance*100)/100;
+                var pos = controls.getObject().position;
+
+                var dx = Math.round(p.x - pos.x*100)/100;
+                var dy = Math.round(p.y - pos.y*100)/100;
+                var dz = Math.round(p.z - pos.z*100)/100;
+
+                // console.log(dx , dy, dz, d);
             }
-
-            if (intersects.length > 0 && controls.rays[i].x == -1) canMoveLeft = false;
-            if (intersects.length > 0 && controls.rays[i].x == 1) canMoveRight = false;
-            if (intersects.length > 0 && controls.rays[i].z == -1) canMoveForward = false;
-            if (intersects.length > 0 && controls.rays[i].z == 1) canMoveBack = false;
-
             scene.remove(arrow[i]);
             //arrow[i] = new THREE.ArrowHelper( camera.getWorldDirection(), camera.getWorldPosition(), 100, "#A1B23C" );
             arrow[i] = new THREE.ArrowHelper(dd, controls.getObject().position, len, "#FAC123");
@@ -350,21 +363,28 @@ function animate() {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
         velocity.y -= velocity.y * 10.0 * delta;
-        if (test_keys("W")) {
 
-            velocity.z -= speed * delta;
+        if (test_keys("W") ) {
+
+            velocity.z -= accel * delta;
+
+            if(!canMoveForward){
+                console.log("YES!")
+                controls.getObject().translateX(-velocity.z * delta);
+            }
         }
-        if (test_keys("S") && canMoveBack) velocity.z += speed * delta;
-        if (test_keys("A") && canMoveLeft) velocity.x -= speed * delta;
-        if (test_keys("D") && canMoveRight) velocity.x += speed * delta;
-        if (test_keys("SHIFT")) velocity.y += speed * delta;
-        if (test_keys("SPACE") && controls.getObject().position.y > 10) velocity.y -= speed * delta; 
+        if (test_keys("S") && canMoveBack) velocity.z += accel * delta;
+        if (test_keys("A") && canMoveLeft) velocity.x -= accel * delta;
+        if (test_keys("D") && canMoveRight) velocity.x += accel * delta;
+        if (test_keys("SHIFT")) velocity.y += accel * delta;
+        if (test_keys("SPACE") && controls.getObject().position.y > 10) velocity.y -= accel * delta; 
         if (test_keys("SPACE") && controls.getObject().position.y <= 10) velocity.y=0;
 
         controls.getObject().translateX(velocity.x * delta);
         controls.getObject().translateY(velocity.y * delta);
         controls.getObject().translateZ(velocity.z * delta);
 
+        console.log(velocity)
         prevTime = time;
     }
     
