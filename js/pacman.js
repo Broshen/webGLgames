@@ -1,17 +1,18 @@
 var key_map = {};
-var camera, camera2, scene, renderer;
+var camera, scene, renderer;
 var geometry, material, mesh;
 var controls;
 var accel = 400.0;
 var wall = [];
 var raycaster;
 var element = document.body;
-var mouse = new THREE.Vector2();
 
 var prevTime = performance.now();
+var time = performance.now();
+var delta;
+var pos;
+
 var velocity = new THREE.Vector3();
-var direction = new THREE.Vector3();
-var debug;
 
 on_key_down = on_key_up = function(e) {
     e = e || event; // to deal with IE
@@ -36,8 +37,6 @@ test_keys = function() {
 var map_2d = {};
 map_2d.px = 5;
 
-//map_2d.camera  = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
-
 setup_2d = function() {
     var canvas = document.getElementById("map-2d");
     var ctx = canvas.getContext("2d");
@@ -61,18 +60,31 @@ setup_2d = function() {
     map_2d.ctx = ctx;
 }
 
+prevCoords = [0, 0];
 
-draw_2d = function() {
-    pos = controls.getObject().position;
+draw_2d = function(pos, color) {
+    try {
+        if (map[prevCoords[0]][prevCoords[1]] == "0")
+            map_2d.ctx.fillStyle = "#ffffff";
+        else
+            map_2d.ctx.fillStyle = "#000000";
+        map_2d.ctx.fillRect(prevCoords[0] * map_2d.px, prevCoords[1] * map_2d.px, map_2d.px, map_2d.px);
 
-    map_2d.x = pos.x / 10 + map.length / 2;
-    map_2d.y = pos.z / 10 + map[0].length / 2;
-    map_2d.ctx.fillStyle = "#FAC123";
-    map_2d.ctx.fillRect(map_2d.x * map_2d.px, map_2d.y * map_2d.px, map_2d.px, map_2d.px);
-
+        var coords = get_cell(pos);
+        map_2d.ctx.fillStyle = color;
+        map_2d.ctx.fillRect(coords[0] * map_2d.px, coords[1] * map_2d.px, map_2d.px, map_2d.px);
+        prevCoords = coords;
+    } catch (err) {}
 
 }
 
+get_cell = function(pos) {
+
+    var x = Math.round(pos.x / 10 + map.length / 2);
+    var y = Math.round(pos.z / 10 + map[0].length / 2);
+
+    return [x, y]
+}
 
 document.addEventListener('keydown', on_key_down, false);
 document.addEventListener('keyup', on_key_up, false);
@@ -94,14 +106,10 @@ THREE.PointerLockControls = function(camera) {
     var PI_2 = Math.PI / 2;
 
     this.rays = [
-//        new THREE.Vector3(0, 0, 1),
-        //new THREE.Vector3(1, 0, 1),
-//        new THREE.Vector3(1, 0, 0),
-        //new THREE.Vector3(1, 0, -1),
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(1, 0, 0),
         new THREE.Vector3(0, 0, -1),
-        //new THREE.Vector3(-1, 0, -1),
-        //new THREE.Vector3(-1, 0, 0),
-        //new THREE.Vector3(-1, 0, 1)
+        new THREE.Vector3(-1, 0, 0),
     ];
 
     var onMouseMove = function(event) {
@@ -115,11 +123,6 @@ THREE.PointerLockControls = function(camera) {
         pitchObject.rotation.x -= movementY * 0.002;
 
         pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
-
-        //for raycasting
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
     };
 
     this.dispose = function() {
@@ -201,23 +204,19 @@ animate();
 
 function init() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
-    camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     setup_2d();
-    camera2.position.y = 200;
-    camera2.rotation.x = -Math.PI / 2;
     scene = new THREE.Scene();
-    //scene.fog = new THREE.Fog(0xffffff, 0, 750);
+
     var light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
     light.position.set(0.5, 1, 0.75);
     scene.add(light);
     controls = new THREE.PointerLockControls(camera);
     scene.add(controls.getObject());
 
-
-
-    controls.getObject().position.x = 140;
-    controls.getObject().position.y = 10;
-    controls.getObject().position.z = -5;
+    pos = controls.getObject().position;
+    pos.x = 140;
+    pos.y = 10;
+    pos.z = -5;
 
 
     // floor
@@ -258,143 +257,107 @@ function init() {
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
-    
+
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 
-var canMoveForward = canMoveBack = canMoveLeft = canMoveRight = true;
-
 var intersects = [],
-    prevIntersects = [],
     arrow = [];
-var INTERSECTED = [];
-var len = 5;
+var len = 4;
 
 
-function testRay(rayIndex){
+var draw = false;
 
+function testRay(d) {
+
+    var raycaster = new THREE.Raycaster(pos, d, 0, len);
+
+    if (draw) {
+        arrow[2] = new THREE.ArrowHelper(d, pos, len, "#FFF000");
+        scene.add(arrow[2]);
+    }
+
+    return raycaster.intersectObjects(wall);
 }
+
+function getComponents(d) {
+    var v = new THREE.Vector3();
+    var r = new THREE.Euler(0, 0, 0, "YXZ");
+
+    r.set(controls.getPitchObject().rotation.x, controls.getObject().rotation.y, 0);
+    var dd = v.copy(d).applyEuler(r);
+    dd.y = 0;
+
+    x = new THREE.Vector3(dd.x, 0, 0);
+    z = new THREE.Vector3(0, 0, dd.z);
+
+    if(draw){
+        arrow[0] = new THREE.ArrowHelper(dd, pos, len, "#FAC123");
+        scene.add(arrow[0])
+
+        arrow[1] = new THREE.ArrowHelper(x, pos, Math.max(dd.x, 3), "#FF0000");
+        scene.add(arrow[1]);
+    
+        arrow[2] = new THREE.ArrowHelper(z, pos, Math.max(dd.z, 3), "#0000FF");
+        scene.add(arrow[2]);
+    }
+    return dd;
+}
+
 function animate() {
     requestAnimationFrame(animate);
     if (controls.enabled) {
-        draw_2d();
-        intersects = [];
+        draw_2d(pos, "#FAC123");
 
 
-        canMoveRight = canMoveLeft = canMoveForward = canMoveBack = true;
-
-        var v = new THREE.Vector3();
-
-        for (var i = 0; i < controls.rays.length; i++) {
-            var r = new THREE.Euler(0, 0, 0, "YXZ");
-            var d = controls.rays[i];
-
-            r.set(controls.getPitchObject().rotation.x, controls.getObject().rotation.y, 0);
-            dd = v.copy(d).applyEuler(r);
-            dd.y = 0;
-
-            var raycaster = new THREE.Raycaster(controls.getObject().position, dd, 0, len);
-
-
-            intersects[i] = raycaster.intersectObjects(wall);
-
-            // // if there is one (or more) intersections
-            // if (intersects[i].length > 0) {
-            //     // if the closest object intersected is not the currently stored intersection object
-            //     if (intersects[i][0].object != INTERSECTED[i]) {
-            //         // restore previous intersection object (if it exists) to its original color
-            //         if (INTERSECTED[i])
-            //             INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
-            //         // store reference to closest object as current intersection object
-            //         INTERSECTED[i] = intersects[i][0].object;
-            //         // store color of closest object (for later restoration)
-            //         INTERSECTED[i].currentHex = INTERSECTED[i].material.color.getHex();
-            //         // set a new color for closest object
-            //         INTERSECTED[i].material.color.setHex(0xffff00);
-            //     }
-            // } else{ // there are no intersections
-            
-            //     // restore previous intersection object (if it exists) to its original color
-            //     if (INTERSECTED[i])
-            //         INTERSECTED[i].material.color.setHex(INTERSECTED[i].currentHex);
-            //     // remove previous intersection object reference
-            //     //     by setting current intersection object to "nothing"
-            //     INTERSECTED[i] = null;
-            // }
-
-            if (intersects[i].length > 0 && controls.rays[i].x == -1) canMoveLeft = false;
-            if (intersects[i].length > 0 && controls.rays[i].x == 1) canMoveRight = false;
-            if (intersects[i].length > 0 && controls.rays[i].z == -1) canMoveForward = false;
-            if (intersects[i].length > 0 && controls.rays[i].z == 1) canMoveBack = false;
-
-
-            if(intersects[i].length > 0 ){
-
-                var p = intersects[i][0].point;
-                var d = Math.round(intersects[i][0].distance*100)/100;
-                var pos = controls.getObject().position;
-
-                var dx = Math.round(p.x - pos.x*100)/100;
-                var dy = Math.round(p.y - pos.y*100)/100;
-                var dz = Math.round(p.z - pos.z*100)/100;
-
-                // console.log(dx , dy, dz, d);
-            }
-            scene.remove(arrow[i]);
-            //arrow[i] = new THREE.ArrowHelper( camera.getWorldDirection(), camera.getWorldPosition(), 100, "#A1B23C" );
-            arrow[i] = new THREE.ArrowHelper(dd, controls.getObject().position, len, "#FAC123");
-            scene.add(arrow[i]);
-
-        }
-
-
-
-        var pos = controls.getObject().position;
-
-       // console.log(canMoveForward, canMoveBack, canMoveLeft, canMoveRight);
-
-        var time = performance.now();
-        var delta = (time - prevTime) / 1000;
-
-
+        time = performance.now();
+        delta = (time - prevTime) / 1000;
 
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
         velocity.y -= velocity.y * 10.0 * delta;
 
-        if (test_keys("W") ) {
-
+        if (test_keys("W")) {
             velocity.z -= accel * delta;
-
-            if(!canMoveForward){
-                console.log("YES!")
-                controls.getObject().translateX(-velocity.z * delta);
-            }
         }
-        if (test_keys("S") && canMoveBack) velocity.z += accel * delta;
-        if (test_keys("A") && canMoveLeft) velocity.x -= accel * delta;
-        if (test_keys("D") && canMoveRight) velocity.x += accel * delta;
+        if (test_keys("S")) {
+            velocity.z += accel * delta;
+        }
+        if (test_keys("A")) {
+            velocity.x -= accel * delta;
+        }
+        if (test_keys("D")) {
+            velocity.x += accel * delta;
+        }
+        if( test_keys("1")){
+            draw = !draw;
+        }
+
+
         if (test_keys("SHIFT")) velocity.y += accel * delta;
-        if (test_keys("SPACE") && controls.getObject().position.y > 10) velocity.y -= accel * delta; 
-        if (test_keys("SPACE") && controls.getObject().position.y <= 10) velocity.y=0;
+        if (test_keys("SPACE") && pos.y > 10) velocity.y -= accel * delta;
+        if (test_keys("SPACE") && pos.y <= 10) velocity.y = 0;
 
-        controls.getObject().translateX(velocity.x * delta);
+
+        vectors = getComponents(velocity);
+
+        for (var i = 0; i < 4; i++) {
+            intersects[i] = testRay(controls.rays[i]);
+        }
+
+        if ((intersects[1].length == 0 && vectors.x > 0) || (intersects[3].length == 0 && vectors.x < 0) ) {
+            pos.x += vectors.x * delta;
+        } 
+        if ((intersects[0].length == 0 && vectors.z > 1) || (intersects[2].length == 0 && vectors.z < -1)) {
+            pos.z += vectors.z * delta;
+        }
+
         controls.getObject().translateY(velocity.y * delta);
-        controls.getObject().translateZ(velocity.z * delta);
 
-        console.log(velocity)
         prevTime = time;
     }
-    
 
-        // renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
-        // renderer.setScissor( 0, 0, window.innerWidth, window.innerHeight );
-        // renderer.setScissorTest( true );
-        renderer.render(scene, camera);        
-        // renderer.setViewport( window.innerWidth*0.75, window.innerHeight*0.75, window.innerWidth*0.25, window.innerHeight*0.25 );
-        // renderer.setScissor( window.innerWidth*0.75, window.innerHeight*0.75, window.innerWidth*0.25, window.innerHeight*0.25  );
-        // renderer.setScissorTest( true );
-        // renderer.render(scene, camera2);
+    renderer.render(scene, camera);
 }
