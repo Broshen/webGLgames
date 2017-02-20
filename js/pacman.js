@@ -257,6 +257,9 @@ function init() {
     pos.x = 75;
     pos.y = 10;
     pos.z = -5;
+    // pos.x = 0;
+    // pos.y = 150;
+    // pos.z = 0;
 
     setup_map();
 
@@ -420,13 +423,13 @@ function animate() {
 
         //eat dots
         if (dotIntersects.length > 0) {
-
-            dots.lastDotEaten = dotIntersects[0].object.dotType;
-
             //delete dot from the scene
             scene.remove(dotIntersects[0].object);
             dots = dots.filter(function(e) {
                 return e !== dotIntersects[0].object });
+
+
+            dots.lastDotEaten =   dotIntersects[0].object.dotType;
             //delete dot from the map
             var coords = get_cell(dotIntersects[0].object.position);
             map[coords[0]][coords[1]] = " ";
