@@ -4,10 +4,15 @@ body{
 	padding: 0;
 	background: pink;
 }
-
+/*
 canvas{
 	width: 100% !important;
 	height: 100% !important;
+}
+*/
+
+.stats{
+	position: absolute;
 }
 
 
