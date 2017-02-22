@@ -15,9 +15,38 @@ canvas{
 	position: absolute;
 }
 
+.overlay{
+	position: absolute;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    font-family: Helvetica, sans-serif;
+}
+
+
+.overlay *{
+    position: relative;
+    top: 35%;
+    width: 50%;
+    margin: 30px auto;	
+}
+
+.btn{
+	width: 200px;
+	border-radius: 10px;
+	background-color: black;
+	padding: 15px 0;
+	cursor: pointer;
+}
+
+.btn:hover{
+	color: #aaaaaa;
+}
 
 #map-2d{
-	position: fixed;
+	position: absolute;
 	top: 0;
 	right: 0;
 	border: 5px solid black;

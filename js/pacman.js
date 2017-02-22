@@ -214,8 +214,10 @@ THREE.PointerLockControls = function(camera) {
 var pointerlockchange = function(event) {
     if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
         controls.enabled = true;
+        $(".overlay").hide();
     } else {
         controls.enabled = false;
+        $(".overlay").show();
     }
 
     prevTime = performance.now();
@@ -227,9 +229,11 @@ var pointerlockerror = function(event) {
 
 
 document.addEventListener('click', function(event) {
-    // Ask the browser to lock the pointer
-    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-    element.requestPointerLock();
+    if(event.target != $(".btn")[0]){
+        // Ask the browser to lock the pointer
+        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+        element.requestPointerLock();
+    }
 }, false);
 
 
@@ -247,9 +251,9 @@ function init() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     scene = new THREE.Scene();
 
-    var light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
-    light.position.set(0.5, 1, 0.75);
-    scene.add(light);
+    // var light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
+    // light.position.set(0.5, 1, 0.75);
+    // scene.add(light);
     controls = new THREE.PointerLockControls(camera);
     scene.add(controls.getObject());
 
@@ -358,6 +362,7 @@ function animate() {
         draw_2d(pos, controls.prevCoords, "#FFEE00", false);
 
         dotIntersects = [];
+        ghostIntersects = [];
 
         time = performance.now();
         delta = (time - prevTime) / 1000;
@@ -439,8 +444,20 @@ function animate() {
 
         //if player has collided with a ghost, game is over
         if(ghostIntersects.length > 0){
-            document.exitPointerLock();
-            cancelAnimationFrame(animiationFrameId);
+
+            var ghostObj = ghostIntersects[0].object;
+            if(ghostObj.mode == "frightened"){
+                ghostObj.mode = "eaten";
+                ghostObj.geometry = dead_ghost_geometry;
+            }
+            else if(ghostObj.mode != "eaten"){
+               document.exitPointerLock();
+               cancelAnimationFrame(animiationFrameId);
+            }
+        }
+
+        if(dots.length == 0){
+            //game is over
         }
 
         ghost_tick(pos, dots, delta);
