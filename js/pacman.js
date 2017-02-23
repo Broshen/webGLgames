@@ -151,7 +151,7 @@ THREE.PointerLockControls = function(camera) {
         new THREE.Vector3(-1, 0, 1),
     ];
 
-    this.prevCoords = [0, 0];
+    this.prevCoords = this.cell = [0, 0];
 
     var onMouseMove = function(event) {
 
@@ -206,8 +206,6 @@ THREE.PointerLockControls = function(camera) {
 
     }();
 
-
-
 };
 
 
@@ -229,13 +227,17 @@ var pointerlockerror = function(event) {
 
 
 document.addEventListener('click', function(event) {
-    if(event.target != $(".btn")[0]){
+    if(event.target != $(".btn")[0] && event.target != $(".description")[0] ){
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
         element.requestPointerLock();
     }
 }, false);
 
+var set_text = function(title, desc){
+    $(".title").html(title);
+    $(".description").html(desc);
+}
 
 // Hook pointer lock state change events
 document.addEventListener('pointerlockchange', pointerlockchange, false);
@@ -251,9 +253,8 @@ function init() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     scene = new THREE.Scene();
 
-    // var light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
-    // light.position.set(0.5, 1, 0.75);
-    // scene.add(light);
+    set_text("FIRST PERSON PACMAN", "Controls: WASD To Move, Mouse to look around");
+
     controls = new THREE.PointerLockControls(camera);
     scene.add(controls.getObject());
 
@@ -261,9 +262,8 @@ function init() {
     pos.x = 75;
     pos.y = 10;
     pos.z = -5;
-    // pos.x = 0;
-    // pos.y = 150;
-    // pos.z = 0;
+
+    controls.cell = controls.prevCoords = get_cell(pos);
 
     setup_map();
 
@@ -332,6 +332,7 @@ function getComponents(d) {
 
     r.set(controls.getPitchObject().rotation.x, controls.getObject().rotation.y, 0);
     var dd = v.copy(d).applyEuler(r);
+
     dd.y = 0;
 
     x = new THREE.Vector3(dd.x, 0, 0);
@@ -353,13 +354,31 @@ function getComponents(d) {
     return dd;
 }
 
+var worldDir = controls.getObject().getWorldDirection();
 function animate() {
     animiationFrameId = requestAnimationFrame(animate);
     stats.begin();
     stats2.begin();
 
     if (controls.enabled) {
-        draw_2d(pos, controls.prevCoords, "#FFEE00", false);
+        draw_2d(controls.cell, controls.prevCoords, "#FFEE00", false);
+
+        controls.worldDir = controls.getObject().getWorldDirection();
+        controls.worldDir.x = Math.round(controls.worldDir.x);
+        controls.worldDir.z = Math.round(controls.worldDir.z);
+
+        
+       //  if(Math.round(controls.worldDir.z) == 1)
+       //     controls.direction = 0;
+       // else if(Math.round(controls.worldDir.x) == -1)
+       //     controls.direction = 1;
+       //  else if(Math.round(controls.worldDir.z) == -1)
+       //     controls.direction = 2;
+       // else if(Math.round(controls.worldDir.x) == 1)
+       //     controls.direction = 3;
+       // else
+       //      console.err("invalid direction")
+
 
         dotIntersects = [];
         ghostIntersects = [];
@@ -426,6 +445,9 @@ function animate() {
 
         controls.getObject().translateY(velocity.y * delta);
 
+        controls.prevCoords = controls.cell;
+        controls.cell = get_cell(pos);
+
         //eat dots
         if (dotIntersects.length > 0) {
             //delete dot from the scene
@@ -442,23 +464,32 @@ function animate() {
             delete dotIntersects[0].object;
         }
 
-        //if player has collided with a ghost, game is over
+        //if player has collided with a ghost
         if(ghostIntersects.length > 0){
 
             var ghostObj = ghostIntersects[0].object;
             if(ghostObj.mode == "frightened"){
                 ghostObj.mode = "eaten";
                 ghostObj.geometry = dead_ghost_geometry;
+                ghostObj.activeColor = "#d3d3d3";
+                ghostObj.velocity = 40;
             }
             else if(ghostObj.mode != "eaten"){
                document.exitPointerLock();
                cancelAnimationFrame(animiationFrameId);
+                set_text("GAME OVER", "You've lost! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
             }
         }
 
         if(dots.length == 0){
-            //game is over
+            //game is over, player wins
+           document.exitPointerLock();
+           cancelAnimationFrame(animiationFrameId);
+
+            set_text("GAME OVER", "You've won! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
         }
+
+
 
         ghost_tick(pos, dots, delta);
         prevTime = time;
