@@ -87,7 +87,7 @@ setup_map = function() {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
 
-                draw_circle((i + 0.5) * map_2d.px, (j + 0.5) * map_2d.px, (map_2d.px-4)/2, "#fff000");
+                draw_circle((i + 0.5) * map_2d.px, (j + 0.5) * map_2d.px, (map_2d.px - 4) / 2, "#fff000");
             } else if (type == 'X') {
 
                 dotUnit = new THREE.Mesh(powerPellet_geometry, powerPellet_material);
@@ -105,7 +105,7 @@ setup_map = function() {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
 
-                draw_circle((i + 0.5) * map_2d.px, (j + 0.5)* map_2d.px, (map_2d.px-2)/2, "#ffa500");
+                draw_circle((i + 0.5) * map_2d.px, (j + 0.5) * map_2d.px, (map_2d.px - 2) / 2, "#ffa500");
             } else {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
@@ -227,14 +227,14 @@ var pointerlockerror = function(event) {
 
 
 document.addEventListener('click', function(event) {
-    if(event.target != $(".btn")[0] && event.target != $(".description")[0] ){
+    if (event.target != $(".btn")[0] && event.target != $(".description")[0] && !gameHasEnded) {
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
         element.requestPointerLock();
     }
 }, false);
 
-var set_text = function(title, desc){
+var set_text = function(title, desc) {
     $(".title").html(title);
     $(".description").html(desc);
 }
@@ -355,6 +355,7 @@ function getComponents(d) {
 }
 
 var worldDir = controls.getObject().getWorldDirection();
+
 function animate() {
     animiationFrameId = requestAnimationFrame(animate);
     stats.begin();
@@ -367,17 +368,17 @@ function animate() {
         controls.worldDir.x = Math.round(controls.worldDir.x);
         controls.worldDir.z = Math.round(controls.worldDir.z);
 
-        
-       //  if(Math.round(controls.worldDir.z) == 1)
-       //     controls.direction = 0;
-       // else if(Math.round(controls.worldDir.x) == -1)
-       //     controls.direction = 1;
-       //  else if(Math.round(controls.worldDir.z) == -1)
-       //     controls.direction = 2;
-       // else if(Math.round(controls.worldDir.x) == 1)
-       //     controls.direction = 3;
-       // else
-       //      console.err("invalid direction")
+
+        //  if(Math.round(controls.worldDir.z) == 1)
+        //     controls.direction = 0;
+        // else if(Math.round(controls.worldDir.x) == -1)
+        //     controls.direction = 1;
+        //  else if(Math.round(controls.worldDir.z) == -1)
+        //     controls.direction = 2;
+        // else if(Math.round(controls.worldDir.x) == 1)
+        //     controls.direction = 3;
+        // else
+        //      console.err("invalid direction")
 
 
         dotIntersects = [];
@@ -453,10 +454,11 @@ function animate() {
             //delete dot from the scene
             scene.remove(dotIntersects[0].object);
             dots = dots.filter(function(e) {
-                return e !== dotIntersects[0].object });
+                return e !== dotIntersects[0].object
+            });
 
 
-            dots.lastDotEaten =   dotIntersects[0].object.dotType;
+            dots.lastDotEaten = dotIntersects[0].object.dotType;
             //delete dot from the map
             var coords = get_cell(dotIntersects[0].object.position);
             map[coords[0]][coords[1]] = " ";
@@ -465,27 +467,27 @@ function animate() {
         }
 
         //if player has collided with a ghost
-        if(ghostIntersects.length > 0){
+        if (ghostIntersects.length > 0) {
 
             var ghostObj = ghostIntersects[0].object;
-            if(ghostObj.mode == "frightened"){
+            if (ghostObj.mode == "frightened") {
                 ghostObj.mode = "eaten";
                 ghostObj.geometry = dead_ghost_geometry;
                 ghostObj.activeColor = "#d3d3d3";
                 ghostObj.velocity = 40;
-            }
-            else if(ghostObj.mode != "eaten"){
-               document.exitPointerLock();
-               cancelAnimationFrame(animiationFrameId);
+            } else if (ghostObj.mode != "eaten") {
+                document.exitPointerLock();
+                cancelAnimationFrame(animiationFrameId);
+                gameHasEnded = true;
                 set_text("GAME OVER", "You've lost! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
             }
         }
 
-        if(dots.length == 0){
+        if (dots.length == 0) {
             //game is over, player wins
-           document.exitPointerLock();
-           cancelAnimationFrame(animiationFrameId);
-
+            document.exitPointerLock();
+            cancelAnimationFrame(animiationFrameId);
+            gameHasEnded = true;
             set_text("GAME OVER", "You've won! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
         }
 

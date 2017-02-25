@@ -8,6 +8,7 @@ var dots = [];
 var totalDots;
 var raycaster;
 var element = document.body;
+var gameHasEnded = false;
 
 var map_2d = {};
 map_2d.px = 7;
