@@ -118,6 +118,16 @@ setup_ghosts = function() {
         ghosts[g].direction = 2; //facing south
     }
 
+    //blinky starts outside of the house
+    ghosts[0].position.copy(ghosts[0].startPos);
+    ghosts[0].hasLeftHouse = true;
+	ghosts[0].modeBeginTime = time;
+
+	//starting positions for the other 3 ghosts
+	ghosts[1].startDots = totalDots;
+	ghosts[2].startDots = totalDots-30;
+	ghosts[3].startDots = totalDots-60;
+
 }
 
 get_shortest_direction_to = function(pos, target, directions) {
@@ -195,7 +205,7 @@ ghosts[3].getChaseDirection = function(directions) {
 ghosts[1].tick = ghosts[2].tick = ghosts[3].tick = ghosts[0].tick = function(player, dots, delta) {
 
 
-    if (dots.length <= totalDots && this.hasLeftHouse == undefined) {
+    if (dots.length <= this.startDots && this.hasLeftHouse == undefined) {
         this.hasLeftHouse = true;
         this.position.copy(ghosts[0].startPos);
         this.modeBeginTime = time;
