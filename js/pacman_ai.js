@@ -162,7 +162,7 @@ ghosts[0].getChaseDirection = function(directions) {
 //pinky's chase target is 4 tiles in front of player, in the current direction the player is in
 ghosts[1].getChaseDirection = function(directions) {
 
-	var targetCell = [controls.cell[0] - controls.worldDir.x*4, controls.cell[1] - controls.worldDir.z*4];
+    var targetCell = [controls.cell[0] - controls.worldDir.x * 4, controls.cell[1] - controls.worldDir.z * 4];
 
     return get_shortest_direction_to(this.cell, targetCell, directions)
 }
@@ -170,11 +170,11 @@ ghosts[1].getChaseDirection = function(directions) {
 //inky's chase target is the tile double the vector from blinky to 2 tiles in front of the player
 ghosts[2].getChaseDirection = function(directions) {
 
-	//coords 2 tiles in front of player
-	var playerTarget = [controls.cell[0] - controls.worldDir.x*2, controls.cell[1] - controls.worldDir.z*2];
+    //coords 2 tiles in front of player
+    var playerTarget = [controls.cell[0] - controls.worldDir.x * 2, controls.cell[1] - controls.worldDir.z * 2];
 
-	//coords of pinky's pos + 2(playerTarget - pinky's pos)
-	var targetCell = [2*playerTarget[0] - ghosts[0].cell[0], 2*playerTarget[1] - ghosts[0].cell[1]];
+    //coords of pinky's pos + 2(playerTarget - pinky's pos)
+    var targetCell = [2 * playerTarget[0] - ghosts[0].cell[0], 2 * playerTarget[1] - ghosts[0].cell[1]];
     return get_shortest_direction_to(this.cell, targetCell, directions)
 }
 
@@ -183,11 +183,10 @@ ghosts[3].getChaseDirection = function(directions) {
 
     var distance = Math.sqrt((this.cell[0] - controls.cell[0]) ** 2 + (this.cell[1] - controls.cell[1]) ** 2)
 
-    if (distance < 8){
-    	return get_shortest_direction_to(this.cell, this.scatterModeTarget, directions)
-    }
-    else{
-    	return get_shortest_direction_to(this.cell, controls.cell, directions)
+    if (distance < 8) {
+        return get_shortest_direction_to(this.cell, this.scatterModeTarget, directions)
+    } else {
+        return get_shortest_direction_to(this.cell, controls.cell, directions)
     }
 }
 
@@ -215,8 +214,7 @@ ghosts[1].tick = ghosts[2].tick = ghosts[3].tick = ghosts[0].tick = function(pla
             this.activeColor = "#3041f2";
             this.scatterModeBeginTime = time;
             this.velocity = 30;
-        }
-        else if(dots.lastDotEaten == "powerPellet" && this.mode == "frightened"){
+        } else if (dots.lastDotEaten == "powerPellet" && this.mode == "frightened") {
             dots.lastDotEaten = "nothing";
         }
 
@@ -230,13 +228,31 @@ ghosts[1].tick = ghosts[2].tick = ghosts[3].tick = ghosts[0].tick = function(pla
             this.mode = "scatter";
             this.modeBeginTime = time;
             this.modeCounter++;
-        } else if (this.mode == "frightened" && time - this.scatterModeBeginTime > 8000) {
-            this.modeBeginTime = time;
-            this.mode = this.previousMode;
-            this.previousMode = "frightened";
-            this.material.materials[0].color.setHex(this.color);
-            this.activeColor = this.colorStr;
-            this.velocity = 35;
+        } else if (this.mode == "frightened") {
+
+        	//scatter mode ends
+            if (time - this.scatterModeBeginTime > 8000) {
+                this.modeBeginTime = time;
+                this.mode = this.previousMode;
+                this.previousMode = "frightened";
+                this.material.materials[0].color.setHex(this.color);
+                this.activeColor = this.colorStr;
+                this.velocity = 35;
+            }
+
+            //ghost should flash
+            else if (time - this.scatterModeBeginTime > 5000){
+            	if(Math.round((time - this.scatterModeBeginTime)/200)%2 == 0){
+		            this.material.materials[0].color.setHex(0x3041f2);
+		            this.activeColor = "#3041f2";
+            	}
+            	else{
+
+		            this.material.materials[0].color.setHex(0xffffff);
+		            this.activeColor = "#ffffff";
+            	}
+            }
+
         } else if (this.mode == "eaten" && this.cell[0] == 11 && (this.cell[1] == 14 || this.cell[1] == 13)) {
             this.mode = this.previousMode;
             this.modeBeginTime = time;
@@ -247,7 +263,7 @@ ghosts[1].tick = ghosts[2].tick = ghosts[3].tick = ghosts[0].tick = function(pla
         }
 
 
-            //if the ghost is close to the center of a cell and has not turned yet
+        //if the ghost is close to the center of a cell and has not turned yet
         if (Math.abs(this.cell[2]) < 0.3 && Math.abs(this.cell[3]) < 0.3 && !this.hasTurned) {
 
             //get all of the possible directions the ghost can move in
@@ -268,10 +284,10 @@ ghosts[1].tick = ghosts[2].tick = ghosts[3].tick = ghosts[0].tick = function(pla
             if (newDirection != this.direction) {
                 //first move the ghost to the exact center of the cell before turning
                 this.position.copy(get_vector_from_map(this.cell[0], this.cell[1], 10));
-	            //turn the ghost to the new direction
-	            while (this.direction != newDirection) {
-	                rotate_ghost_left(this);
-	            }
+                //turn the ghost to the new direction
+                while (this.direction != newDirection) {
+                    rotate_ghost_left(this);
+                }
             }
 
             this.hasTurned = true;
