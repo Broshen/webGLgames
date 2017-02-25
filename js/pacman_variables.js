@@ -33,7 +33,6 @@ $(stats2.domElement).css("left", $(stats.domElement).width());
 
 ghostbody_material = new THREE.MeshBasicMaterial({ color: "#ff0000", side: THREE.DoubleSide });
 
-
 eyeball_material = new THREE.MeshBasicMaterial({ color: "#ffffff", side: THREE.DoubleSide });
 eye_material = new THREE.MeshBasicMaterial({ color: "#000000", side: THREE.DoubleSide });
 
@@ -95,22 +94,7 @@ dead_ghost_geometry.merge(ghostEye1_mesh.geometry, ghostEye1_mesh.matrix, 2);
 dead_ghost_geometry.merge(ghostEye2_mesh.geometry, ghostEye2_mesh.matrix, 2);
 
 var ghosts = [];
-ghosts[0] = new THREE.Mesh(ghost_geometry, ghost_material.clone());
-ghosts[0].color = 0xff5f5f;
-ghosts[0].colorStr = "#ff5f5f";
-ghosts[0].name = "Blinky";
-ghosts[1] = new THREE.Mesh(ghost_geometry, ghost_material.clone());
-ghosts[1].color = 0xffb8ff;
-ghosts[1].colorStr = "#ffb8ff";
-ghosts[1].name = "Pinky";
-ghosts[2] = new THREE.Mesh(ghost_geometry, ghost_material.clone());
-ghosts[2].color = 0x01ffff;
-ghosts[2].colorStr = "#01ffff";
-ghosts[2].name = "Inky";
-ghosts[3] = new THREE.Mesh(ghost_geometry, ghost_material.clone());
-ghosts[3].color = 0xffb851;
-ghosts[3].colorStr = "#ffb851";
-ghosts[3].name = "Clyde";
+
 
 
 var map = [

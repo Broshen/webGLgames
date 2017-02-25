@@ -362,24 +362,11 @@ function animate() {
     stats2.begin();
 
     if (controls.enabled) {
-        draw_2d(controls.cell, controls.prevCoords, "#FFEE00", false);
+        draw_2d(controls.cell, controls.prevCoords, "#FFEE00");
 
         controls.worldDir = controls.getObject().getWorldDirection();
         controls.worldDir.x = Math.round(controls.worldDir.x);
         controls.worldDir.z = Math.round(controls.worldDir.z);
-
-
-        //  if(Math.round(controls.worldDir.z) == 1)
-        //     controls.direction = 0;
-        // else if(Math.round(controls.worldDir.x) == -1)
-        //     controls.direction = 1;
-        //  else if(Math.round(controls.worldDir.z) == -1)
-        //     controls.direction = 2;
-        // else if(Math.round(controls.worldDir.x) == 1)
-        //     controls.direction = 3;
-        // else
-        //      console.err("invalid direction")
-
 
         dotIntersects = [];
         ghostIntersects = [];
@@ -493,7 +480,7 @@ function animate() {
 
 
 
-        ghost_tick(pos, dots, delta);
+        ghost_tick(dots, delta);
         prevTime = time;
     }
 
