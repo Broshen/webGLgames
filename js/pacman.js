@@ -8,12 +8,14 @@ function init() {
 
     if(!debugMode){
         $(".stats").css("display", "none");
+        set_text("FIRST PERSON PACMAN", "Controls: WASD To Move, Mouse to look around. <br>To enable debug mode, append ?debug to the URL.");
+    }else{
+        set_text("FIRST PERSON PACMAN", "Controls: WASD To Move, Mouse to look around. <br>Shift to move up. Space to move down.<br> Hold 1 to draw intersection vectors.<br> Hold 2 to pass through floors. <br>Press 3 to land on floor.<br> Press 4 to delete all drawn vectors.");
     }
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     scene = new THREE.Scene();
 
-    set_text("FIRST PERSON PACMAN", "Controls: WASD To Move, Mouse to look around");
 
     controls = new THREE.PointerLockControls(camera);
     scene.add(controls.getObject());
@@ -89,6 +91,9 @@ function animate() {
         }
         if (test_keys("3") && debugMode) {
             pos.y = 10;
+        }
+        if (test_keys("4") && debugMode) {
+            deleteAllArrows();
         }
         if (test_keys("SHIFT") && debugMode) velocity.y += accel * delta;
 

@@ -31,18 +31,8 @@ canvas{
     top: 35%;
     width: 50%;
     margin: 30px auto;	
-}
-
-.btn{
-	width: 200px;
-	border-radius: 10px;
-	background-color: black;
-	padding: 15px 0;
-	cursor: pointer;
-}
-
-.btn:hover{
-	color: #aaaaaa;
+    line-height: 30px;
+    letter-spacing: 0.5px;
 }
 
 #map-2d{
