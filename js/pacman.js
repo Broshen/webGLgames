@@ -164,7 +164,7 @@ function animate() {
                 document.exitPointerLock();
                 cancelAnimationFrame(animationFrameId);
                 gameHasEnded = true;
-                set_text("GAME OVER", "You've lost! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
+                set_text("GAME OVER", "You've lost! <br> If you're interested in contributing, visit <a href='https://github.com/Broshen/webGLgames'>https://github.com/Broshen/webGLgames</a> <br> To restart the game, refresh the page.");
             }
         }
 
@@ -173,7 +173,7 @@ function animate() {
             document.exitPointerLock();
             cancelAnimationFrame(animationFrameId);
             gameHasEnded = true;
-            set_text("GAME OVER", "You've won! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
+            set_text("GAME OVER", "You've won! If you're interested in contributing, visit <a href='https://github.com/Broshen/webGLgames'>https://github.com/Broshen/webGLgames</a> <br> To restart the game, refresh the page.");
         }
 
 
