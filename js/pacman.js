@@ -1,255 +1,15 @@
-on_key_down = on_key_up = function(e) {
-    e = e || event; // to deal with IE
-    key_map[e.keyCode] = e.type == 'keydown';
-    /* insert conditional here */
-}
-
-test_key = function(selkey) {
-    return key_map[selkey] || key_map[alias[selkey]];
-}
-
-test_keys = function() {
-    var keylist = arguments;
-
-    for (var i = 0; i < keylist.length; i++)
-        if (!test_key(keylist[i]))
-            return false;
-
-    return true;
-}
-
-
-setup_map = function() {
-    var canvas = document.getElementById("map-2d");
-    var ctx = canvas.getContext("2d");
-
-    map_2d.canvas = canvas;
-    map_2d.ctx = ctx;
-
-    canvas.height = map_2d.px * map[0].length;
-    canvas.width = map_2d.px * map.length;
-
-
-    // floor
-    floor_geometry = new THREE.PlaneGeometry(map.length * 10, map[0].length * 10);
-    floor_geometry.rotateX(-Math.PI / 2);
-
-    floor_material = new THREE.MeshBasicMaterial({ color: "#ffffff" });
-    floor = new THREE.Mesh(floor_geometry, floor_material);
-    floor.position.y = 5;
-    floor.position.z = -5;
-    floor.position.x = -5;
-    scene.add(floor);
-
-
-
-    wall_geometry = new THREE.BoxGeometry(10, 10, 10);
-    wall_material = new THREE.MeshBasicMaterial({ color: "#1a237e", side: THREE.DoubleSide });
-
-    dot_geometry = new THREE.SphereGeometry(1, 10, 10);
-    dot_material = new THREE.MeshBasicMaterial({ color: "#fff000", side: THREE.DoubleSide });
-
-    powerPellet_geometry = new THREE.SphereGeometry(3, 10, 10);
-    powerPellet_material = new THREE.MeshBasicMaterial({ color: "#ffa500", side: THREE.DoubleSide });
-
-
-
-    for (var i = 0; i < map.length; i++) {
-        for (var j = 0; j < map[i].length; j++) {
-
-            var type = map[i][j];
-            var x = (i - map.length / 2) * 10;
-            var y = 10;
-            var z = (j - map[i].length / 2) * 10;
-            if (type == '0') {
-                wallUnit = new THREE.Mesh(wall_geometry, wall_material);
-                wall.push(wallUnit);
-
-                scene.add(wallUnit);
-                wallUnit.position.x = x;
-                wallUnit.position.y = y;
-                wallUnit.position.z = z;
-
-                ctx.fillStyle = "#FFFFFF";
-                ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
-            } else if (type == '*') {
-
-                dotUnit = new THREE.Mesh(dot_geometry, dot_material);
-                dotUnit.dotType = "normal";
-
-                dots.push(dotUnit);
-                scene.add(dotUnit);
-                dotUnit.position.x = x;
-                dotUnit.position.y = y;
-                dotUnit.position.z = z;
-
-
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
-
-                draw_circle((i + 0.5) * map_2d.px, (j + 0.5) * map_2d.px, (map_2d.px - 4) / 2, "#fff000");
-            } else if (type == 'X') {
-
-                dotUnit = new THREE.Mesh(powerPellet_geometry, powerPellet_material);
-                dotUnit.dotType = "powerPellet";
-
-                dots.push(dotUnit);
-                scene.add(dotUnit);
-
-                dotUnit.position.x = x;
-                dotUnit.position.y = y;
-                dotUnit.position.z = z;
-
-
-
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
-
-                draw_circle((i + 0.5) * map_2d.px, (j + 0.5) * map_2d.px, (map_2d.px - 2) / 2, "#ffa500");
-            } else {
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(i * map_2d.px, j * map_2d.px, map_2d.px, map_2d.px);
-            }
-
-
-
-        }
-    }
-
-    totalDots = dots.length;
-}
-
-
-
-document.addEventListener('keydown', on_key_down, false);
-document.addEventListener('keyup', on_key_up, false);
-
-
-THREE.PointerLockControls = function(camera) {
-
-    var scope = this;
-
-    camera.rotation.set(0, 0, 0);
-
-    var pitchObject = new THREE.Object3D();
-    pitchObject.add(camera);
-
-    var yawObject = new THREE.Object3D();
-    yawObject.position.y = 10;
-    yawObject.add(pitchObject);
-
-    var PI_2 = Math.PI / 2;
-
-    this.rays = [
-        new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(0, 0, -1),
-        new THREE.Vector3(-1, 0, 0),
-        new THREE.Vector3(1, 0, 1),
-        new THREE.Vector3(1, 0, -1),
-        new THREE.Vector3(-1, 0, -1),
-        new THREE.Vector3(-1, 0, 1),
-    ];
-
-    this.prevCoords = this.cell = [0, 0];
-
-    var onMouseMove = function(event) {
-
-        if (scope.enabled === false) return;
-
-        var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-        var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-        yawObject.rotation.y -= movementX * 0.002;
-        pitchObject.rotation.x -= movementY * 0.002;
-
-        pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
-    };
-
-    this.dispose = function() {
-
-        document.removeEventListener('mousemove', onMouseMove, false);
-
-    };
-
-    document.addEventListener('mousemove', onMouseMove, false);
-
-    this.enabled = false;
-
-    this.getObject = function() {
-
-        return yawObject;
-
-    };
-
-    this.getPitchObject = function() {
-
-        return pitchObject;
-    }
-
-    this.getDirection = function() {
-
-        // assumes the camera itself is not rotated
-
-        var direction = new THREE.Vector3(0, 0, -1);
-        var rotation = new THREE.Euler(0, 0, 0, "YXZ");
-
-        return function(v) {
-
-            rotation.set(pitchObject.rotation.x, yawObject.rotation.y, 0);
-
-            v.copy(direction).applyEuler(rotation);
-
-            return v;
-
-        };
-
-    }();
-
-};
-
-
-var pointerlockchange = function(event) {
-    if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
-        controls.enabled = true;
-        $(".overlay").hide();
-    } else {
-        controls.enabled = false;
-        $(".overlay").show();
-    }
-
-    prevTime = performance.now();
-};
-
-var pointerlockerror = function(event) {
-    alert("pointerlockerror", event);
-};
-
-
-document.addEventListener('click', function(event) {
-    if (event.target != $(".btn")[0] && event.target != $(".description")[0] && !gameHasEnded) {
-        // Ask the browser to lock the pointer
-        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-        element.requestPointerLock();
-    }
-}, false);
-
-var set_text = function(title, desc) {
-    $(".title").html(title);
-    $(".description").html(desc);
-}
-
-// Hook pointer lock state change events
-document.addEventListener('pointerlockchange', pointerlockchange, false);
-document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-document.addEventListener('pointerlockerror', pointerlockerror, false);
-document.addEventListener('mozpointerlockerror', pointerlockerror, false);
-
-init();
-animate();
+/*======================================
+=            Main functions            =
+======================================*/
 
 function init() {
+
+    debugMode = window.location.search.indexOf("debug") > -1;
+
+    if(!debugMode){
+        $(".stats").css("display", "none");
+    }
+
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     scene = new THREE.Scene();
 
@@ -263,101 +23,34 @@ function init() {
     pos.y = 10;
     pos.z = -5;
 
+    raycaster = new THREE.Raycaster(pos, controls.getObject().getWorldDirection(), 0, len);
+
     controls.cell = controls.prevCoords = get_cell(pos);
 
     setup_map();
-
     setup_ghosts();
-    //
+
+    //initialize Three.js canvas
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor("#000000");
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    //
+
+    //add all event listeners
+    document.addEventListener('keydown', on_key_down, false);
+    document.addEventListener('keyup', on_key_up, false);
+    document.addEventListener('click', on_click, false);
+    document.addEventListener('pointerlockchange', pointerlockchange, false);
+    document.addEventListener('mozpointerlockchange', pointerlockchange, false);
+    document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
+    document.addEventListener('pointerlockerror', pointerlockerror, false);
+    document.addEventListener('mozpointerlockerror', pointerlockerror, false);
     window.addEventListener('resize', onWindowResize, false);
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-
-var wallIntersects = [],
-    dotIntersects = [],
-    ghostIntersects = [],
-    arrow = [];
-var len = 4;
-var toggleFloor = false;
-var animationFrameId;
-
-
-var draw = false;
-
-function testRay(d, group) {
-
-    var raycaster = new THREE.Raycaster(pos, d, 0, len);
-
-    if (draw) {
-        arrow[2] = new THREE.ArrowHelper(d, pos, len, "#FFF000");
-        arrow[2].name = "ArrowHelper";
-        scene.add(arrow[2]);
-    }
-
-    return raycaster.intersectObjects(group);
-}
-
-function deleteAllArrows() {
-    var toBeDeleted = [];
-    scene.children.map(function(c) {
-        if (c.name == "ArrowHelper") {
-            toBeDeleted.push(c);
-        }
-    });
-
-    toBeDeleted.map(function(c) {
-        scene.remove(c);
-        delete c;
-    })
-    console.log("geometries=" + this.renderer.info.memory.geometries + " programs=" + this.renderer.info.memory.programs + " textures=" + this.renderer.info.memory.textures);
-}
-
-
-function getComponents(d) {
-    var v = new THREE.Vector3();
-    var r = new THREE.Euler(0, 0, 0, "YXZ");
-
-    r.set(controls.getPitchObject().rotation.x, controls.getObject().rotation.y, 0);
-    var dd = v.copy(d).applyEuler(r);
-
-    dd.y = 0;
-
-    x = new THREE.Vector3(dd.x, 0, 0);
-    z = new THREE.Vector3(0, 0, dd.z);
-
-    if (draw) {
-        arrow[0] = new THREE.ArrowHelper(dd, pos, len, "#FAC123");
-        arrow[0].name = "ArrowHelper";
-        scene.add(arrow[0])
-
-        arrow[1] = new THREE.ArrowHelper(x, pos, Math.max(dd.x, 3), "#FF0000");
-        arrow[1].name = "ArrowHelper";
-        scene.add(arrow[1]);
-
-        arrow[2] = new THREE.ArrowHelper(z, pos, Math.max(dd.z, 3), "#0000FF");
-        arrow[2].name = "ArrowHelper";
-        scene.add(arrow[2]);
-    }
-    return dd;
-}
-
-var worldDir = controls.getObject().getWorldDirection();
-
 function animate() {
-    animiationFrameId = requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
     stats.begin();
     stats2.begin();
 
@@ -379,8 +72,8 @@ function animate() {
         velocity.y -= velocity.y * 10.0 * delta;
 
 
-        draw = test_keys("1");
-        toggleFloor = test_keys("2");
+        draw = test_keys("1") && debugMode;
+        toggleFloor = test_keys("2") && debugMode;
 
         if (test_keys("W")) {
             velocity.z -= accel * delta;
@@ -394,14 +87,14 @@ function animate() {
         if (test_keys("D")) {
             velocity.x += accel * delta;
         }
-        if (test_keys("3")) {
+        if (test_keys("3") && debugMode) {
             pos.y = 10;
         }
-        if (test_keys("SHIFT")) velocity.y += accel * delta;
+        if (test_keys("SHIFT") && debugMode) velocity.y += accel * delta;
 
-        if (test_keys("SPACE")) velocity.y -= accel * delta;
+        if (test_keys("SPACE") && debugMode) velocity.y -= accel * delta;
 
-        if (test_keys("SPACE") && pos.y <= 10 && !toggleFloor) {
+        if (test_keys("SPACE") && pos.y <= 10 && !toggleFloor && debugMode) {
             velocity.y = 0;
         }
 
@@ -464,7 +157,7 @@ function animate() {
                 ghostObj.velocity = 40;
             } else if (ghostObj.mode != "eaten") {
                 document.exitPointerLock();
-                cancelAnimationFrame(animiationFrameId);
+                cancelAnimationFrame(animationFrameId);
                 gameHasEnded = true;
                 set_text("GAME OVER", "You've lost! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
             }
@@ -473,14 +166,18 @@ function animate() {
         if (dots.length == 0) {
             //game is over, player wins
             document.exitPointerLock();
-            cancelAnimationFrame(animiationFrameId);
+            cancelAnimationFrame(animationFrameId);
             gameHasEnded = true;
             set_text("GAME OVER", "You've won! If you're interested in contributing, visit <a>https://github.com/Broshen/webGLgames</a>");
         }
 
 
 
-        ghost_tick(dots, delta);
+        ghosts[0].tick(dots, delta);
+        ghosts[1].tick(dots, delta);
+        ghosts[2].tick(dots, delta);
+        ghosts[3].tick(dots, delta);
+
         prevTime = time;
     }
 
@@ -489,3 +186,8 @@ function animate() {
     stats.end();
     stats2.end();
 }
+
+
+
+init();
+animate();

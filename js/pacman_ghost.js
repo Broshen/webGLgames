@@ -6,7 +6,7 @@
 //startDots			: 	int
 //scatterModeTarget	: 	array [int, int] 
 //target			: 	pointerLockControls object
-function GHOST(color, name, startDots, dots, scatterModeTarget, target) {
+function GHOST(color, name, startDots, scatterModeTarget, target) {
 
     /*----------  Variables  ----------*/
     GHOST.count = ++GHOST.count || 1; //static counter of how many ghosts have been initialized
@@ -77,6 +77,8 @@ function GHOST(color, name, startDots, dots, scatterModeTarget, target) {
     this.rotate_left = function() {
         this.rotateY(-Math.PI / 2);
         this.direction = (this.direction + 1) % 4;
+
+
     }
 
     //ghost's AI to determine where to go

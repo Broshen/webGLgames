@@ -1,11 +1,23 @@
 var key_map = {};
 var camera, scene, renderer;
-var geometry, material, mesh;
 var controls;
 var accel = 400.0;
-var wall = [];
-var dots = [];
+var wall = [],
+	dots = [],
+	wallIntersects = [],
+    dotIntersects = [],
+    ghostIntersects = [],
+    arrow = [];
+var len = 4;
+var toggleFloor = false;
+var animationFrameId;
+var vectors;
+
+var draw = false;
+var debugMode = false;
+
 var totalDots;
+
 var raycaster;
 var element = document.body;
 var gameHasEnded = false;
@@ -31,45 +43,45 @@ $(stats2.domElement).addClass("stats")
 $(stats2.domElement).css("left", $(stats.domElement).width());
 
 
-ghostbody_material = new THREE.MeshBasicMaterial({ color: "#ff0000", side: THREE.DoubleSide });
+var ghostbody_material = new THREE.MeshBasicMaterial({ color: "#ff0000", side: THREE.DoubleSide });
 
-eyeball_material = new THREE.MeshBasicMaterial({ color: "#ffffff", side: THREE.DoubleSide });
-eye_material = new THREE.MeshBasicMaterial({ color: "#000000", side: THREE.DoubleSide });
-
-
-ghost_material = new THREE.MultiMaterial([ghostbody_material, eyeball_material, eye_material]);
-
-ghostHead_geometry = new THREE.SphereGeometry(3, 30, 30, 0, Math.PI * 2, 0, Math.PI / 2);
-ghostBody_geometry = new THREE.CylinderGeometry(3, 3, 3, 50);
-ghostEyeball_geometry = new THREE.SphereGeometry(0.5, 20, 20);
-ghostEye_geometry = new THREE.SphereGeometry(0.2, 10, 10);
-
-ghost_geometry = new THREE.Geometry();
-dead_ghost_geometry = new THREE.Geometry();
+var eyeball_material = new THREE.MeshBasicMaterial({ color: "#ffffff", side: THREE.DoubleSide });
+var eye_material = new THREE.MeshBasicMaterial({ color: "#000000", side: THREE.DoubleSide });
 
 
-ghostHead_mesh = new THREE.Mesh(ghostHead_geometry);
+var ghost_material = new THREE.MultiMaterial([ghostbody_material, eyeball_material, eye_material]);
+
+var ghostHead_geometry = new THREE.SphereGeometry(3, 30, 30, 0, Math.PI * 2, 0, Math.PI / 2);
+var ghostBody_geometry = new THREE.CylinderGeometry(3, 3, 3, 50);
+var ghostEyeball_geometry = new THREE.SphereGeometry(0.5, 20, 20);
+var ghostEye_geometry = new THREE.SphereGeometry(0.2, 10, 10);
+
+var ghost_geometry = new THREE.Geometry();
+var dead_ghost_geometry = new THREE.Geometry();
+
+
+var ghostHead_mesh = new THREE.Mesh(ghostHead_geometry);
 ghostHead_mesh.position.y = -0.5;
 
-ghostBody_mesh = new THREE.Mesh(ghostBody_geometry);
+var ghostBody_mesh = new THREE.Mesh(ghostBody_geometry);
 ghostBody_mesh.position.y = -2;
 
-eyeBall_z = 2.5;
-eye_z = 2.86;
-eye_x = 1.1;
+var eyeBall_z = 2.5;
+var eye_z = 2.86;
+var eye_x = 1.1;
 
-ghostEyeball1_mesh = new THREE.Mesh(ghostEyeball_geometry);
+var ghostEyeball1_mesh = new THREE.Mesh(ghostEyeball_geometry);
 ghostEyeball1_mesh.position.x = -1;
 ghostEyeball1_mesh.position.z = eyeBall_z;
 
-ghostEyeball2_mesh = new THREE.Mesh(ghostEyeball_geometry);
+var ghostEyeball2_mesh = new THREE.Mesh(ghostEyeball_geometry);
 ghostEyeball2_mesh.position.x = 1;
 ghostEyeball2_mesh.position.z = eyeBall_z;
 
-ghostEye1_mesh = new THREE.Mesh(ghostEye_geometry);
+var ghostEye1_mesh = new THREE.Mesh(ghostEye_geometry);
 ghostEye1_mesh.position.x = -eye_x;
 ghostEye1_mesh.position.z = eye_z;
-ghostEye2_mesh = new THREE.Mesh(ghostEye_geometry);
+var ghostEye2_mesh = new THREE.Mesh(ghostEye_geometry);
 ghostEye2_mesh.position.x = eye_x;
 ghostEye2_mesh.position.z = eye_z;
 
